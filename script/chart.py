@@ -7,6 +7,7 @@ from datetime import datetime
 import bisect
 import re
 import numpy as np
+import operator
 
 #CONSTANTS
 COLORS = dict(mcolors.BASE_COLORS, **mcolors.CSS4_COLORS)
@@ -44,8 +45,7 @@ def plotLines(data,opt = {}, logit= False):
 #OPTIONAL# logit: False, True
 def plotBars(data,opt = {}, logit= False):
 
-    x_groups = []
-    bars_groups = []
+    x_groups = {}
     bars_legend = []
 
     for d_bar in data:
@@ -56,15 +56,18 @@ def plotBars(data,opt = {}, logit= False):
             for index_x in range(0,len(d['x'])):
                 x_val = d['x'][index_x]
                 if x_val not in x_groups:
-                    bisect.insort(x_groups, x_val)
-                    bars_groups.append([])
+                    x_groups[x_val] = []
 
-                index_in_groups = x_groups.index(x_val)
-                #insert same y val
-                bars_groups[index_in_groups].append(d['y'][index_x])
+                x_groups[x_val].append(d['y'][index_x])
+
+    #sort x_groups
+    x_groups = sorted(x_groups.items(), key=operator.itemgetter(0))
+    sorted_x_groups = {}
+    for elem in x_groups:
+        sorted_x_groups[elem[0]] = elem[1]
 
 
-    ind = np.arange(len(x_groups))    # the x locations for the groups
+    ind = np.arange(len(sorted_x_groups))    # the x locations for the groups
     width = 0.3     # the width of the bars: can also be len(x) sequence
     if 'width' in opt:
         width = opt['width']
@@ -75,9 +78,10 @@ def plotBars(data,opt = {}, logit= False):
     loop_width = width/len(bars_legend)
     starting_from = ind - loop_width
     for bl_index in range(0,len(bars_legend)):
+
         y_vals = []
-        for g in bars_groups:
-            y_vals.append(g[bl_index])
+        for g in sorted_x_groups:
+            y_vals.append(sorted_x_groups[g][bl_index])
 
         my_color = None
         if 'color' in opt:
@@ -98,12 +102,10 @@ def plotBars(data,opt = {}, logit= False):
     # Add some text for labels, title and custom x-axis tick labels, etc.
     ax.set_xticks(ind)
     #x_groups = [item.strftime('%Y-%m') for item in x_groups]
-    ax.set_xticklabels(tuple(x_groups))
+    ax.set_xticklabels(tuple(sorted_x_groups.keys()))
     ax.legend()
 
-
     return plt
-    #return plt
 
 
 #Run a demo
