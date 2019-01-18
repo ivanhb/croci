@@ -151,4 +151,28 @@ macro_type = {
         }
 }
 
+
 #Load the COCI data
+COCI_CSV_PATH = "data/non_open_sample.csv"
+
+with open(COCI_CSV_PATH,'r') as cocicsv:
+    cocicsv_reader = csv.DictReader(cocicsv)
+    for row in cocicsv_reader:
+        #"doi","type","cited_by","non_open"
+
+        if row['type'] not in all_types:
+            all_types[row['type']] = {'label': row['type'],"macro_type": "other"}
+
+        r_m_type = all_types[row['type']]['macro_type']
+
+        #in case is not int
+        try:
+            macro_type[r_m_type]['value']['coci_open'] += row['cited_by']
+        except Exception as e:
+            macro_type[r_m_type]['value']['coci_open'] += 0
+
+        #in case is not int
+        try:
+            macro_type[r_m_type]['value']['crossref_close'] += row['non_open']
+        except Exception as e:
+            macro_type[r_m_type]['value']['crossref_close'] += 0
