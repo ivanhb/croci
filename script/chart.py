@@ -43,7 +43,7 @@ def plotLines(data,opt = {}, logit= False):
 # data:  {'[[ENTITY]]':{'x':[[ARR_OF_VALS]], 'y':[[ARR_OF_VALS]] }}
 #OPTIONAL# opt: {'color': [[HEX_VAL]], 'multi': [[False, True]], 'width': [[NUMBER]]}
 #OPTIONAL# logit: False, True
-def plotBars(data,opt = {}, logit= False):
+def plotBars(data,opt = {}, sortit= False, logit= False):
 
     x_groups = {}
     bars_legend = []
@@ -60,11 +60,15 @@ def plotBars(data,opt = {}, logit= False):
 
                 x_groups[x_val].append(d['y'][index_x])
 
+    print(x_groups)
     #sort x_groups
-    x_groups = sorted(x_groups.items(), key=operator.itemgetter(0))
     sorted_x_groups = {}
-    for elem in x_groups:
-        sorted_x_groups[elem[0]] = elem[1]
+    if sortit:
+        x_groups = sorted(x_groups.items(), key=operator.itemgetter(0))
+        for elem in x_groups:
+            sorted_x_groups[elem[0]] = elem[1]
+    else:
+        sorted_x_groups = x_groups
 
 
     ind = np.arange(len(sorted_x_groups))    # the x locations for the groups
@@ -89,6 +93,37 @@ def plotBars(data,opt = {}, logit= False):
                 my_color = opt['color'][bars_legend[bl_index]]
 
         rects1 = ax.bar(starting_from, tuple(y_vals), width, color=my_color, label= bars_legend[bl_index])
+        if 'bar_val' in opt:
+            for rect in rects1:
+                height = rect.get_height()
+
+                coef = 1
+                if 'bar_coi' in opt:
+                    coef = opt['bar_coi']
+
+                round_val = 1
+                if 'bar_round' in opt:
+                    round_val = opt['bar_round']
+
+                suf = ''
+                if 'bar_suf' in opt:
+                    suf = opt['bar_suf']
+
+                pre = ''
+                if 'bar_pre' in opt:
+                    pre = opt['bar_pre']
+
+                val = height/coef
+                if val > 1:
+                    #round_val = int(round_val)
+                    val = round(val,round_val)
+                    suf = 'M'
+                else:
+                    val = val * 1000
+                    val = round(val,round_val)
+                    suf = 'K'
+
+                plt.text(rect.get_x() + rect.get_width()/2.0, height, '%s%s%s' % (pre,str(val),suf), ha='center', va='bottom')
 
         if 'multi' in opt:
             if opt['multi'] == True:
@@ -104,6 +139,18 @@ def plotBars(data,opt = {}, logit= False):
     #x_groups = [item.strftime('%Y-%m') for item in x_groups]
     ax.set_xticklabels(tuple(sorted_x_groups.keys()))
     ax.legend()
+
+    if logit:
+        plt.yscale('log')
+
+    if 'ylabel' in opt:
+        plt.ylabel(opt['ylabel'])
+
+    if 'xlabel' in opt:
+        plt.xlabel(opt['xlabel'])
+
+    plt.rcParams['figure.figsize'] = (14,8)
+
 
     return plt
 
@@ -122,5 +169,5 @@ def demo_ex():
     my_plt.legend(loc='upper left', shadow=True, fontsize='large', title='Ex Chart')
     my_plt.ylabel('y-val')
     my_plt.xlabel('x-val')
-    my_plt.rcParams['figure.figsize'] = (10,6)
+    my_plt.rcParams['figure.figsize'] = (14,8)
     return my_plt
